@@ -43,7 +43,7 @@ func (m *Manager) StartSession(w http.ResponseWriter, r *http.Request) (session 
 	cookie, err := r.Cookie(m.cookieName)
 	if err != nil || cookie.Value == "" {
 		sid := m.SessionID()
-		session, err = m.provider.SessionInit(sid)
+		session, err = m.provider.SessionInit(url.QueryEscape(sid))
 		if err != nil {
 			return
 		}
@@ -97,6 +97,8 @@ type Provider interface {
 	SessionDestroy(sid string) error
 	//SessionGC will delete all the expired Session based on given maxAge
 	SessionGC(maxAge time.Duration)
+	//SessionUpdate will update an existing session corresponds to given session id
+	SessionUpdate(sid string) error
 }
 
 func InstallProviderPlugin(name string, provider Provider) {
