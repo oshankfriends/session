@@ -17,19 +17,27 @@ type SessionStore struct {
 }
 
 func (s *SessionStore) Set(key interface{}, value interface{}) error {
+	s.value[key] = value
+	pDer.SessionUpdate(s.sID)
 	return nil
 }
 
 func (s *SessionStore) Get(key interface{}) interface{} {
-	return struct{}{}
-}
-
-func (s *SessionStore) Delete(key interface{}) error {
+	pDer.SessionUpdate(s.sID)
+	if val, ok := s.value[key]; ok {
+		return val
+	}
 	return nil
 }
 
-func (s *SessionStore) SessionID() (sid string) {
-	return
+func (s *SessionStore) Delete(key interface{}) error {
+	delete(s.value, key)
+	pDer.SessionUpdate(s.sID)
+	return nil
+}
+
+func (s *SessionStore) SessionID() string {
+	return s.sID
 }
 
 type Provider struct {
@@ -78,9 +86,9 @@ func (p *Provider) SessionGC(maxAge time.Duration) {
 		if seesionEle == nil {
 			break
 		}
-		if seesionEle.Value.(*SessionStore).accsssTime.Unix()+int64(maxAge) < time.Now().Unix() {
+		if seesionEle.Value.(*SessionStore).accsssTime.Unix()+int64(maxAge/time.Second) < time.Now().Unix() {
 			p.sessionList.Remove(seesionEle)
-			delete(p.sessions, seesionEle.Value.(SessionStore).sID)
+			delete(p.sessions, seesionEle.Value.(*SessionStore).sID)
 		} else {
 			break
 		}
